@@ -13,27 +13,37 @@
 
 export default {
 	async scheduled(event, env, ctx) {
+		const nextApp = env.NEXT_APP;
+
 		const productIds = [
-			7961383502005, 8030062837941, 8047179759797, 7762251120821, 8048698196149,
-			7710195744949,
+			"7961383502005",
+			"8030062837941",
+			"8047179759797",
+			"7762251120821",
+			"8048698196149",
+			"7710195744949",
 		];
 
 		try {
 			// Create an array of promises for each API call
-			const promises = productIds.map((productId) =>
-				fetch(
-					`https://tiptop.liamtsang.workers.dev/api/debug/check-sizes?id=${productId}`,
-					{
-						method: "POST",
-					},
-				).then((response) => {
-					if (!response.ok) {
-						throw new Error(
-							`API call failed for product ${productId}: ${response.statusText}`,
-						);
-					}
-					return response.json();
-				}),
+			const promises = productIds.map(async (productId) =>
+				nextApp
+					.fetch(
+						`https://tiptop.liamtsang.workers.dev/api/size-convert/debug/check-sizes?id=${productId}`,
+						{
+							method: "POST",
+						},
+					)
+					.then(async (response) => {
+						if (!response.ok) {
+							throw new Error(
+								`API call failed for product ${productId}: ${response.statusText}`,
+							);
+						}
+						const product = (await response.json()) as any;
+
+						return [product.product.title, product.product.variants[0].option1];
+					}),
 			);
 
 			// Execute all promises concurrently
