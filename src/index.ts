@@ -13,72 +13,25 @@
 
 export default {
 	async scheduled(event, env, ctx) {
-		const nextApp = env.NEXT_APP;
-
-		const productIds = [
-			"7961383502005",
-			"8030062837941",
-			"8047179759797",
-			"7762251120821",
-			"8048698196149",
-			"7710195744949",
-		];
-
+		// Using fetch API for a POST request
 		try {
-			// Create an array of promises for each API call
-			const promises = productIds.map(async (productId) =>
-				nextApp
-					.fetch(
-						`https://tiptop.liamtsang.workers.dev/api/size-convert/debug/check-sizes?id=${productId}`,
-						{
-							method: "POST",
-						},
-					)
-					.then(async (response) => {
-						if (!response.ok) {
-							throw new Error(
-								`API call failed for product ${productId}: ${response.statusText}`,
-							);
-						}
-						const product = (await response.json()) as any;
-
-						return [product.product.title, product.product.variants[0].option1];
-					}),
+			const response = await fetch(
+				"https://tiptop-hono.liamtsang.workers.dev/api/convert/convert-all",
+				{
+					method: "POST",
+				},
 			);
 
-			// Execute all promises concurrently
-			const results = await Promise.all(promises);
+			if (!response.ok) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
 
-			// Log all results
-			console.log("All API calls completed:", results);
+			const data = await response.json();
+			console.log("Success:", data);
+			return data;
 		} catch (error) {
-			console.error("Cron job failed:", error);
-			throw error; // Re-throw the error to be handled by the caller if needed
+			console.error("Error:", error);
+			throw error;
 		}
-	},
-
-	// async scheduled(event, env, ctx) {
-	// 	try {
-	// 		// Make the API call to your Next.js endpoint
-	// 		const response = await fetch(
-	// 			"https://tiptop.liamtsang.workers.dev/api/size-convert/convert-all",
-	// 			{
-	// 				method: "POST",
-	// 			},
-	// 		);
-
-	// 		if (!response.ok) {
-	// 			throw new Error(`API call failed: ${response.statusText}`);
-	// 		}
-
-	// 		const data = await response.json();
-	// 		console.log(data);
-	// 	} catch (error) {
-	// 		console.error("Cron job failed:", error);
-	// 	}
-	// },
-
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response("Hello World!");
 	},
 } satisfies ExportedHandler<Env>;
